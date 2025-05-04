@@ -3,12 +3,6 @@ pipeline {
 		kubernetes {
 			inheritFrom 'default'
 			defaultContainer 'dind'
-			yaml '''
-spec:
-  containers:
-  - name: dind
-    image: docker:28-dind
-'''
 		}
 	}
 
