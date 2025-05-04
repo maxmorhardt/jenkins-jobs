@@ -25,7 +25,6 @@ spec:
 	}
 
 	stages {
-
 		stage('Git Clone') {
 			steps {
 				script {
@@ -33,10 +32,10 @@ spec:
 						currentBuild.result = 'ABORTED'
 						error('Version parameter not supplied')
 					}
-					
+
 					checkout scmGit(
 						branches: [[
-							name: "$BRANCH"
+							name: "$BRANCH_NAME"
 						]],
 						userRemoteConfigs: [[
 							credentialsId: 'github',
@@ -61,6 +60,5 @@ spec:
 				}
 			}
 		}
-
 	}
 }
