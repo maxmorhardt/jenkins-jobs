@@ -16,7 +16,7 @@ spec:
 	}
 
 	parameters {
-		string(name: 'BRANCH', defaultValue: params.TAG ?: 'main', description: 'Git tag version', trim: true)
+		string(name: 'VERSION', defaultValue: params.VERSION ?: '', description: 'Image version', trim: true)
 	}
 
 	environment { 
@@ -29,9 +29,14 @@ spec:
 		stage('Git Clone') {
 			steps {
 				script {
+					if ("$VERSION".isEmpty()) {
+						currentBuild.result = 'ABORTED'
+						error('Version parameter not supplied')
+					}
+					
 					checkout scmGit(
 						branches: [[
-							name: "$TAG"
+							name: "$BRANCH"
 						]],
 						userRemoteConfigs: [[
 							credentialsId: 'github',
@@ -48,12 +53,9 @@ spec:
 			steps {
 				script {
 					withCredentials([usernamePassword(credentialsId: 'docker', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
-						TAG_VERSION = "$TAG".split("/")[1]
-						echo "$TAG_VERSION"
-
 						sh 'echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin'
 						
-						sh "docker buildx build --platform linux/arm64/v8 . --tag $DOCKER_USERNAME/$APP_NAME:$TAG_VERSION --tag $DOCKER_USERNAME/$APP_NAME:latest --file jenkins/jobs/buildpack/Dockerfile"
+						sh "docker buildx build --platform linux/arm64/v8 . --tag $DOCKER_USERNAME/$APP_NAME:$VERSION --tag $DOCKER_USERNAME/$APP_NAME:latest --file buildpack/Dockerfile"
 						sh "docker push $DOCKER_USERNAME/$APP_NAME --all-tags"
 					}
 				}
