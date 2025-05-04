@@ -7,7 +7,7 @@ kind: Pod
 spec:
   containers:
   - name: dind
-    image: docker:27-dind
+    image: docker:28-dind
     imagePullPolicy: Always
     securityContext:
       privileged: true
