@@ -21,7 +21,7 @@ spec:
 
 	environment { 
 		APP_NAME = 'jenkins-buildpack'
-		GITHUB_URL = 'https://github.com/maxmorhardt/k8s'
+		GITHUB_URL = 'https://github.com/maxmorhardt/jenkins-jobs'
 	}
 
 	stages {
