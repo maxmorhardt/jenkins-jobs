@@ -1,21 +1,8 @@
 pipeline {
 	agent {
 		kubernetes {
+			inheritFrom: 'default'
 			defaultContainer 'dind'
-			yaml '''
-kind: Pod
-spec:
-  containers:
-  - name: dind
-    image: docker:28-dind
-    imagePullPolicy: Always
-    securityContext:
-      privileged: true
-    resources:
-      limits:
-        memory: "1Gi"
-        cpu: "1000m"
-'''
 		}
 	}
 
