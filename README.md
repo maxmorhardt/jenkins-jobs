@@ -1,9 +1,13 @@
-![Jenkins](https://img.shields.io/badge/jenkins-D24939?style=plastic&logo=jenkins&logoColor=black)
+# Jenkins Jobs
+
+![Jenkins](https://img.shields.io/badge/jenkins-D24939?style=for-the-badge&logo=jenkins&logoColor=black)
 
 ## Overview
-This repo contains various Jenkins jobs. 
+This repo contains various Jenkins jobs. Each folder within the repository will contain a Jenkinsfile and any associated files required for that given job
 
 ## Types of Jobs
 - One time scripts
 - Chron jobs
 - Data collection/cleaup
+
+CI-CD jobs for a given app should have their Jenkinsfile be in their respective repo
