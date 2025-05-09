@@ -1,0 +1,55 @@
+pipeline {
+	agent {
+		kubernetes {
+			inheritFrom 'default'
+			defaultContainer 'buildpack'
+		}
+	}
+
+	parameters {
+		string(name: 'SECRET_NAME', defaultValue: params.SECRET_NAME ?: '', description: 'Name of secret', trim: true)
+		string(name: 'SECRET_DATA', defaultValue: '', description: 'Data within secret in format key=value,key2=value2', trim: true)
+		string(name: 'NAMESPACE', defaultValue: params.NAMESPACE ?: '', description: 'Namespace of resource', trim: true)
+	}
+
+	stages {
+		stage('Setup') {
+			steps {
+				script {
+					withCredentials([file(credentialsId: 'kube-config', variable: 'KUBE_CONFIG')]) {
+						checkout scmGit(
+							branches: [[
+								name: "$BRANCH"
+							]],
+							userRemoteConfigs: [[
+								credentialsId: 'github',
+								url: "$GITHUB_URL"
+							]]
+						)
+
+						sh 'mkdir -p $WORKSPACE/.kube && cp $KUBE_CONFIG $WORKSPACE/.kube/config'
+						sh 'ls -lah'
+
+						echo "SECRET_NAME: $SECRET_NAME"
+						echo "NAMESPACE: $NAMESPACE"
+					}
+				}
+			}
+		}
+
+		stage('Create Secret') {
+			steps {
+				script {
+					sh """
+						SECRET_ARGS=""
+						IFS=',' read -ra PAIRS <<< "$SECRET_DATA"
+						for pair in "${PAIRS[@]}"; do
+							SECRET_ARGS="$SECRET_ARGS --from-literal=$pair"
+						done
+						kubectl create secret generic $SECRET_NAME $SECRET_ARGS -n $NAMESPACE
+                    """
+				}
+			}
+		}
+	}
+}

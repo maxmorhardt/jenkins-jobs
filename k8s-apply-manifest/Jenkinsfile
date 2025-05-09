@@ -8,12 +8,13 @@ pipeline {
 
 	parameters {
 		string(name: 'GITHUB_URL', defaultValue: params.GITHUB_URL ?: '', description: 'GitHub URL', trim: true)
-		string(name: 'BRANCH', defaultValue: params.GITHUB_URL ?: '', description: 'GitHub branch', trim: true)
+		string(name: 'BRANCH', defaultValue: params.BRANCH ?: '', description: 'GitHub branch', trim: true)
 		string(name: 'MANIFEST_FILE_PATH', defaultValue: params.MANIFEST_FILE_PATH ?: '', description: 'Path to manifest file', trim: true)
+		string(name: 'NAMESPACE', defaultValue: params.NAMESPACE ?: '', description: 'Namespace for manifest', trim: true)
 	}
 
 	stages {
-		stage('Git Clone') {
+		stage('Setup') {
 			steps {
 				script {
 					withCredentials([file(credentialsId: 'kube-config', variable: 'KUBE_CONFIG')]) {
@@ -33,6 +34,7 @@ pipeline {
 						echo "GITHUB_URL: $GITHUB_URL"
 						echo "BRANCH: $BRANCH"
 						echo "MANIFEST_FILE_PATH: $MANIFEST_FILE_PATH"
+						echo "NAMESPACE: $NAMESPACE"
 					}
 				}
 			}
@@ -41,7 +43,7 @@ pipeline {
 		stage('Apply Manifest') {
 			steps {
 				script {
-					sh "kubectl apply -f $MANIFEST_FILE_PATH"
+					sh "kubectl apply -f $MANIFEST_FILE_PATH -n $NAMESPACE"
 				}
 			}
 		}

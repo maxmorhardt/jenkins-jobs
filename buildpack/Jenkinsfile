@@ -16,7 +16,7 @@ pipeline {
 	}
 
 	stages {
-		stage('Git Clone') {
+		stage('Setup') {
 			steps {
 				script {
 					checkout scmGit(
