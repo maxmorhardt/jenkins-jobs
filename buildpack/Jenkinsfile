@@ -19,11 +19,6 @@ pipeline {
 		stage('Git Clone') {
 			steps {
 				script {
-					if ("$VERSION".isEmpty()) {
-						currentBuild.result = 'ABORTED'
-						error('Version parameter not supplied')
-					}
-
 					checkout scmGit(
 						branches: [[
 							name: "$BRANCH_NAME"
@@ -35,6 +30,7 @@ pipeline {
 					)
 
 					sh 'ls -lah'
+					echo "Version: $VERSION"
 				}
 			}
 		}

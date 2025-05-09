@@ -10,5 +10,6 @@ This repo contains various Jenkins jobs. Each folder within the repository will 
 - One time scripts
 - Chron jobs
 - Data collection/cleaup
+- Global jobs not specific to a single application
 
 CI-CD jobs for a given app should have their Jenkinsfile be in their respective repo
