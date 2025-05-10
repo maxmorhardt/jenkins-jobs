@@ -40,20 +40,14 @@ pipeline {
 		stage('Create Secret') {
 			steps {
 				script {
-					def secretArgs = ""
-					"$SECRET_DATA".split(",").each(secret -> {
-						secretArgs = secretArgs + " --from-literal=" + secret
-					})
-					
+					echo "Parsing secret input"
+					def args = ""
+					for (def secret : "$SECRET_DATA".split(",")) {
+						args = args + " --from-literal=" + secret
+					}
 
-					sh """
-						SECRET_ARGS=""
-						for secret in $(echo $SECRET_DATA | sed "s/,/ /g")
-						do
-							SECRET_ARGS="$SECRET_ARGS --from-literal=$secret"
-						done
-						kubectl create secret generic $SECRET_NAME $SECRET_ARGS -n $NAMESPACE
-                    """
+					echo "Creating secret"
+					sh "kubectl create secret generic $SECRET_NAME $args -n $NAMESPACE"
 				}
 			}
 		}
