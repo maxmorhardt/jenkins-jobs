@@ -37,7 +37,11 @@ pipeline {
 					}
 
 					echo "Creating secret"
-					sh "kubectl create secret generic $SECRET_NAME $args -n $NAMESPACE"
+					sh """
+						set +x
+						kubectl create secret generic $SECRET_NAME $args -n $NAMESPACE
+					"""
+					echo "Successfully created secret"					
 				}
 			}
 		}
