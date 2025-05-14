@@ -1,0 +1,37 @@
+pipeline {
+	agent {
+		kubernetes {
+			inheritFrom 'default'
+			defaultContainer 'buildpack'
+		}
+	}
+
+	parameters {
+		string(name: 'CHART_NAME', defaultValue: params.RESOURCE_NAME ?: '', description: 'Name of chart', trim: true)
+		string(name: 'NAMESPACE', defaultValue: params.NAMESPACE ?: '', description: 'Namespace of chart', trim: true)
+	}
+
+	stages {
+		stage('Setup') {
+			steps {
+				script {
+					withCredentials([file(credentialsId: 'kube-config', variable: 'KUBE_CONFIG')]) {
+						sh 'mkdir -p $WORKSPACE/.kube && cp $KUBE_CONFIG $WORKSPACE/.kube/config'
+						sh 'ls -lah'
+
+						echo "CHART_NAME: $CHART_NAME"
+						echo "NAMESPACE: $NAMESPACE"
+					}
+				}
+			}
+		}
+
+		stage('Helm Uninstall') {
+			steps {
+				script {
+					sh "helm uninstall $CHART_NAME -n $NAMESPACE"
+				}
+			}
+		}
+	}
+}
