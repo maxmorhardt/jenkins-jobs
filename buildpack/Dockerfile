@@ -19,8 +19,8 @@ RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/s
 RUN install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 
 # install helm
-RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
-RUN chmod 700 get_helm.sh
+RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 && ls-lah
+RUN chmod 777 get_helm.sh
 RUN ./get_helm.sh
 RUN rm get_helm.sh
 
