@@ -28,19 +28,10 @@ RUN curl https://baltocdn.com/helm/signing.asc | gpg --dearmor | tee /usr/share/
 RUN apt-get install openjdk-21-jdk -y
 
 # install maven
-RUN curl -fsSL https://dlcdn.apache.org/maven/maven-3/3.9.8/binaries/apache-maven-3.9.8-bin.tar.gz -o apache-maven-3.9.8-bin.tar.gz && \
-	tar -xvf apache-maven-3.9.8-bin.tar.gz && \
-	mv apache-maven-3.9.8 /opt/ && \
-	rm apache-maven-3.9.8-bin.tar.gz
-
-ENV M2_HOME="/opt/apache-maven-3.9.8"
-ENV PATH="$M2_HOME/bin:$PATH"
+RUN apt-get install maven
 
 # install node
-RUN curl -fsSL https://deb.nodesource.com/setup_22.x -o nodesource_setup.sh && \
-	sh nodesource_setup.sh && \
-	apt-get install -y nodejs && \
-	rm nodesource_setup.sh
+RUN apt-get install nodejs npm -y
 
 # install python
 RUN apt-get install python3 python3-pip python3-venv -y
