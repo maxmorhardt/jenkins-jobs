@@ -28,7 +28,7 @@ RUN curl https://baltocdn.com/helm/signing.asc | gpg --dearmor | tee /usr/share/
 RUN apt-get install openjdk-21-jdk -y
 
 # install maven
-RUN apt-get install maven
+RUN apt-get install maven -y
 
 # install node
 RUN apt-get install nodejs npm -y
