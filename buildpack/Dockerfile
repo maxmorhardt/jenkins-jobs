@@ -18,10 +18,11 @@ RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/s
 	install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 
 # install helm
-RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 && \
-	chmod 777 get_helm.sh && \
-	./get_helm.sh && \
-	rm get_helm.sh
+RUN curl https://baltocdn.com/helm/signing.asc | gpg --dearmor | tee /usr/share/keyrings/helm.gpg > /dev/null && \
+	apt-get install apt-transport-https -y && \
+	echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" | tee /etc/apt/sources.list.d/helm-stable-debian.list && \
+	apt-get update && \
+	apt-get install helm
 
 # install java
 RUN apt-get install openjdk-21-jdk -y
