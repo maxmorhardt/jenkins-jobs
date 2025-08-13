@@ -5,8 +5,8 @@ USER root
 # update packages
 RUN apt-get update && apt-get upgrade -y
 
-# install certs curl unzip and software common
-RUN apt-get install ca-certificates curl unzip software-properties-common -y
+# install certs curl unzip software common, and git
+RUN apt-get install ca-certificates curl unzip software-properties-common git -y
 
 # install chromium + driver
 RUN add-apt-repository ppa:xtradeb/apps -y && \
