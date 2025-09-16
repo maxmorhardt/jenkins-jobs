@@ -5,14 +5,10 @@ USER root
 # update packages
 RUN apt-get update && apt-get upgrade -y
 
-# apt-fast
-RUN add-apt-repository -y ppa:apt-fast/stable
-RUN add-apt-repository -y ppa:xtradeb/apps
-RUN apt-get update
-RUN apt-get install -y apt-fast
-
 # install required ci/cd packages
-RUN apt-fast install -y  \
+RUN add-apt-repository ppa:xtradeb/apps && \
+    apt-get update && \
+	apt-get install -y  \
 	ca-certificates \
 	curl \
 	unzip \
