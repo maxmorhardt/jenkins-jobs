@@ -10,13 +10,14 @@ USER root
 RUN apt-get update && apt-get install -y \
     curl \
     apt-transport-https \
+	ca-certificates \
+	gpg \
     gnupg \
     && rm -rf /var/lib/apt/lists/*
 
 # Add Helm GPG key and repo
-RUN curl https://baltocdn.com/helm/signing.asc | gpg --dearmor -o /usr/share/keyrings/helm.gpg \
-    && echo "deb [signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" \
-       > /etc/apt/sources.list.d/helm-stable-debian.list
+RUN curl https://baltocdn.com/helm/signing.asc | gpg --dearmor -o /usr/share/keyrings/helm.gpg
+RUN echo "deb [signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" > /etc/apt/sources.list.d/helm-stable-debian.list
 
 # Install Helm
 RUN apt-get update && apt-get install -y helm \
