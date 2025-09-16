@@ -7,10 +7,10 @@ USER root
 
 RUN apt-get update && apt-get install -y curl
 
-RUN curl -fsSL -o /tmp/helm.tar.gz https://get.helm.sh/helm-${HELM_VERSION}-linux-arm64.tar.gz && \
-    tar -xz -C /usr/local/bin --strip-components=1 -f /tmp/helm.tar.gz linux-arm64/helm && \
-    chmod +x /usr/local/bin/helm && \
-    rm /tmp/helm.tar.gz
+RUN curl -LO -o /tmp/helm.tar.gz https://get.helm.sh/helm-${HELM_VERSION}-linux-arm64.tar.gz
+RUN tar -xz -C /usr/local/bin --strip-components=1 -f /tmp/helm.tar.gz linux-arm64/helm
+RUN chmod +x /usr/local/bin/helm
+RUN rm /tmp/helm.tar.gz
 
 # setup for apt installs
 RUN apt-get update && \
