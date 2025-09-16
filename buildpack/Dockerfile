@@ -5,9 +5,9 @@ ENV HELM VERSION="v3.19.0"
 
 USER root
 
-RUN apt-get update && apt-get install -y curl ca-certificates apt-transport-https
+RUN apt-get update && apt-get install -y curl ca-certificates apt-transport-https wget
 
-RUN curl -LO -o /tmp/helm.tar.gz https://get.helm.sh/helm-${HELM_VERSION}-linux-arm64.tar.gz
+RUN wget https://get.helm.sh/helm-v3.19.0-linux-arm64.tar.gz
 RUN tar -xz -C /usr/local/bin --strip-components=1 -f /tmp/helm.tar.gz linux-arm64/helm
 RUN chmod +x /usr/local/bin/helm
 RUN rm /tmp/helm.tar.gz
