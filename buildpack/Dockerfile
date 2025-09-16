@@ -26,7 +26,9 @@ RUN apt-fast update && apt-fast install -y  \
 	maven \
 	nodejs \
 	npm \
-	libpq-dev && \
+	libpq-dev \
+	gpg \
+    apt-transport-https && \
 	rm -rf /var/lib/apt/lists/*
 
 # install kubectl
