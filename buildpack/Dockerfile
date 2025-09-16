@@ -10,6 +10,8 @@ RUN apt-get update && \
 
 RUN add-apt-repository -y ppa:apt-fast/stable && \
 	add-apt-repository -y ppa:xtradeb/apps && \
+	curl -fsSL https://packages.buildkite.com/helm-linux/helm-debian/gpgkey | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null && \
+	echo "deb [signed-by=/usr/share/keyrings/helm.gpg] https://packages.buildkite.com/helm-linux/helm-debian/any/ any main" | tee /etc/apt/sources.list.d/helm-stable-debian.list && \
     apt-get update && \
     apt-get install -y apt-fast && \
 	rm -rf /var/lib/apt/lists/*
@@ -28,16 +30,12 @@ RUN apt-fast update && apt-fast install -y  \
 	npm \
 	libpq-dev \
 	gpg \
-    apt-transport-https && \
+    apt-transport-https \
+	helm && \
 	rm -rf /var/lib/apt/lists/*
 
 # install kubectl
 RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/arm64/kubectl" && \
 	install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
-
-# install helm
-RUN curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
-RUN chmod +x get_helm.sh
-RUN ./get_helm.sh
 
 CMD ["sleep", "infinity"]
