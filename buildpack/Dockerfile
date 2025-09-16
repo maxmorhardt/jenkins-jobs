@@ -19,6 +19,7 @@ RUN apt-fast update && apt-fast install -y  \
 	ca-certificates \
 	curl \
 	unzip \
+	snapd \
 	git \
 	chromium \
 	chromium-driver \
