@@ -5,19 +5,24 @@ USER root
 
 
 
-# Install deps and Helm
+
+# Install dependencies
 RUN apt-get update && apt-get install -y \
-      curl \
-      apt-transport-https \
-      gnupg \
-    && curl -fsSL https://baltocdn.com/helm/signing.asc | apt-key add - \
-    && echo "deb https://baltocdn.com/helm/stable/debian/ all main" \
-        > /etc/apt/sources.list.d/helm-stable-debian.list \
-    && apt-get update \
-    && apt-get install -y helm \
+    curl \
+    apt-transport-https \
+    gnupg \
     && rm -rf /var/lib/apt/lists/*
 
-# Verify
+# Add Helm GPG key and repo
+RUN curl https://baltocdn.com/helm/signing.asc | gpg --dearmor -o /usr/share/keyrings/helm.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" \
+       > /etc/apt/sources.list.d/helm-stable-debian.list
+
+# Install Helm
+RUN apt-get update && apt-get install -y helm \
+    && rm -rf /var/lib/apt/lists/*
+
+# Verify installation
 RUN helm version
 
 
