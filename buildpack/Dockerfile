@@ -5,8 +5,10 @@ USER root
 # setup for apt installs
 RUN apt-get update && \
 	apt-get upgrade -y && \
-	apt-get install -y software-properties-common &&
-	add-apt-repository -y ppa:apt-fast/stable && \
+	apt-get install -y software-properties-common && \
+	rm -rf /var/lib/apt/lists/*
+
+RUN add-apt-repository -y ppa:apt-fast/stable && \
 	add-apt-repository -y ppa:xtradeb/apps && \
     apt-get update && \
     apt-get install -y apt-fast && \
