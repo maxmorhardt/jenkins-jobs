@@ -35,6 +35,9 @@ RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/s
 	install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 
 # install helm
-RUN snap install helm --classic
+RUN systemctl unmask snapd.service && \
+	systemctl enable snapd.service && \
+	systemctl start snapd.service && \
+	snap install helm --classic
 
 CMD ["sleep", "infinity"]
