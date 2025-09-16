@@ -2,14 +2,15 @@ FROM ubuntu:24.04
 
 USER root
 
-# update packages
-RUN apt-get update && apt-get upgrade -y && apt-get install -y software-properties-common
-
-# apt-fast
-RUN add-apt-repository -y ppa:apt-fast/stable && \
-	add-apt-repository ppa:xtradeb/apps -y && \
+# setup for apt installs
+RUN apt-get update && \
+	apt-get upgrade -y && \
+	apt-get install -y software-properties-common &&
+	add-apt-repository -y ppa:apt-fast/stable && \
+	add-apt-repository -y ppa:xtradeb/apps && \
     apt-get update && \
-    apt-get install -y apt-fast
+    apt-get install -y apt-fast && \
+	rm -rf /var/lib/apt/lists/*
 
 # install required ci/cd packages
 RUN apt-fast install -y  \
@@ -23,7 +24,8 @@ RUN apt-fast install -y  \
 	maven \
 	nodejs \
 	npm \
-	libpq-dev
+	libpq-dev && \
+	rm -rf /var/lib/apt/lists/*
 
 # install kubectl
 RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/arm64/kubectl" && \
