@@ -15,7 +15,7 @@ RUN add-apt-repository -y ppa:apt-fast/stable && \
 	rm -rf /var/lib/apt/lists/*
 
 # install required ci/cd packages
-RUN apt-fast install -y  \
+RUN apt-fast update && apt-fast install -y  \
 	ca-certificates \
 	curl \
 	unzip \
