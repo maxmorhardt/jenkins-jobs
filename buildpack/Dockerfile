@@ -3,16 +3,19 @@ FROM ubuntu:24.04
 USER root
 
 # update packages
-RUN apt-get update && apt-get upgrade -y
+RUN apt-get update && apt-get upgrade -y && apt-get install -y software-properties-common
+
+# apt-fast
+RUN add-apt-repository -y ppa:apt-fast/stable && \
+	add-apt-repository ppa:xtradeb/apps -y && \
+    apt-get update && \
+    apt-get install -y apt-fast
 
 # install required ci/cd packages
-RUN add-apt-repository ppa:xtradeb/apps && \
-    apt-get update && \
-	apt-get install -y  \
+RUN apt-fast install -y  \
 	ca-certificates \
 	curl \
 	unzip \
-	software-properties-common \
 	git \
 	chromium \
 	chromium-driver \
