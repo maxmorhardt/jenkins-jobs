@@ -1,32 +1,16 @@
 FROM ubuntu:24.04
 
+ENV JDK_VERSION="21"
+ENV HELM VERSION="v3.19.0" 
+
 USER root
 
+RUN apt-get update && apt-get install -y curl
 
-
-
-
-# Install dependencies
-RUN apt-get update && apt-get install -y \
-    curl \
-    apt-transport-https \
-	ca-certificates \
-	gpg \
-    gnupg \
-    && rm -rf /var/lib/apt/lists/*
-
-# Add Helm GPG key and repo
-RUN curl https://baltocdn.com/helm/signing.asc | gpg --dearmor -o /usr/share/keyrings/helm.gpg
-RUN echo "deb [signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" > /etc/apt/sources.list.d/helm-stable-debian.list
-
-# Install Helm
-RUN apt-get update && apt-get install -y helm \
-    && rm -rf /var/lib/apt/lists/*
-
-# Verify installation
-RUN helm version
-
-
+RUN curl -fsSL -o /tmp/helm.tar.gz https://get.helm.sh/helm-${HELM_VERSION}-linux-arm64.tar.gz && \
+    tar -xz -C /usr/local/bin --strip-components=1 -f /tmp/helm.tar.gz linux-arm64/helm && \
+    chmod +x /usr/local/bin/helm && \
+    rm /tmp/helm.tar.gz
 
 # setup for apt installs
 RUN apt-get update && \
@@ -48,7 +32,7 @@ RUN apt-fast update && apt-fast install -y  \
 	git \
 	chromium \
 	chromium-driver \
-	openjdk-21-jdk \
+	openjdk-${JDK_VERSION}-jdk \
 	maven \
 	nodejs \
 	npm \
