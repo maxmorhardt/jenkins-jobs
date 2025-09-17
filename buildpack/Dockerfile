@@ -13,7 +13,7 @@ RUN apt-get update && \
 	apt-transport-https && \
 	rm -rf /var/lib/apt/lists/*
 
-Node setup
+# node repo setup
 RUN curl -fsSL https://deb.nodesource.com/setup_24.x -o nodesource_setup.sh && \
 	chmod +x nodesource_setup.sh && \
 	./nodesource_setup.sh && \
