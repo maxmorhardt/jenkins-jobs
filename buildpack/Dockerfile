@@ -1,16 +1,18 @@
 FROM ubuntu:24.04
 
 ENV JDK_VERSION="21"
-ENV HELM VERSION="v3.19.0" 
 
 USER root
 
-RUN apt-get update && apt-get install -y curl ca-certificates apt-transport-https wget
 
-RUN wget https://get.helm.sh/helm-v3.19.0-linux-arm64.tar.gz
-RUN tar -xz -C /usr/local/bin --strip-components=1 -f /tmp/helm.tar.gz linux-arm64/helm
-RUN chmod +x /usr/local/bin/helm
-RUN rm /tmp/helm.tar.gz
+
+RUN apt-get install curl gpg apt-transport-https --yes
+RUN curl -LO https://packages.buildkite.com/helm-linux/helm-debian/gpgkey | gpg --dearmor | tee /usr/share/keyrings/helm.gpg > /dev/null
+RUN echo "deb [signed-by=/usr/share/keyrings/helm.gpg] https://packages.buildkite.com/helm-linux/helm-debian/any/ any main" | tee /etc/apt/sources.list.d/helm-stable-debian.list
+RUN apt-get update
+RUN apt-get install helm
+
+
 
 # setup for apt installs
 RUN apt-get update && \
