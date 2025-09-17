@@ -6,7 +6,7 @@ USER root
 
 # setup for apt installs
 RUN apt-get update && \
-	apt-get install -y 
+	apt-get install -y \
 	software-properties-common \
 	curl \
 	ca-certificates \
