@@ -6,7 +6,11 @@ USER root
 
 # setup for apt installs
 RUN apt-get update && \
-	apt-get install -y software-properties-common && \
+	apt-get install -y 
+	software-properties-common \
+	curl \
+	ca-certificates \
+	apt-transport-https && \
 	rm -rf /var/lib/apt/lists/*
 
 RUN add-apt-repository -y ppa:apt-fast/stable && \
@@ -23,11 +27,8 @@ RUN curl -fsSL https://deb.nodesource.com/setup_24.x -o nodesource_setup.sh && \
 # install required ci/cd packages
 RUN echo "deb [trusted=yes] https://packages.buildkite.com/helm-linux/helm-debian/any/ any main" | tee /etc/apt/sources.list.d/helm-stable-debian.list && \
 	add-apt-repository -y ppa:xtradeb/apps && \
-	apt-fast update && apt-fast install -y  \
-	ca-certificates \
-	apt-transport-https \
+	apt-fast update && apt-fast install -y \
 	gpg \
-	curl \
 	wget \
 	unzip \
 	git \
