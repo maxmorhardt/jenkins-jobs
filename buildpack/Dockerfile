@@ -1,6 +1,7 @@
 FROM ubuntu:24.04
 
 ENV JDK_VERSION="21"
+ENV NODE_VERSION="22"
 
 USER root
 
@@ -9,24 +10,20 @@ RUN apt-get update && apt-get install -y \
 	software-properties-common \
 	curl \
 	ca-certificates \
-	apt-transport-https
+	apt-transport-https && \
+	rm -rf /var/lib/apt/lists/*
 
 # node repo setup
-RUN curl -fsSL https://deb.nodesource.com/setup_22.x -o nodesource_setup.sh
-RUN chmod +x nodesource_setup.sh
-RUN ./nodesource_setup.sh
-RUN rm -f nodesource_setup.sh
+RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x -o nodesource_setup.sh && \
+	chmod +x nodesource_setup.sh && \
+	./nodesource_setup.sh && \
+	rm -f nodesource_setup.sh
 
-RUN apt-get update && apt-get install -y nodejs
-
+# chromium and helm repo setup
 RUN add-apt-repository -y ppa:xtradeb/apps && \
-    echo "deb [trusted=yes] https://packages.buildkite.com/helm-linux/helm-debian/any/ any main" | tee /etc/apt/sources.list.d/helm-stable-debian.list && \
-    apt-get update && \
-    apt-get install -y helm
+    echo "deb [trusted=yes] https://packages.buildkite.com/helm-linux/helm-debian/any/ any main" | tee /etc/apt/sources.list.d/helm-stable-debian.list
 
-RUN apt-get install -y \
-	gpg \
-	wget \
+RUN apt-get update && apt-get install -y \
 	unzip \
 	git \
 	chromium \
@@ -34,7 +31,6 @@ RUN apt-get install -y \
 	openjdk-${JDK_VERSION}-jdk \
 	maven \
 	nodejs \
-	npm \
 	helm \
 	libpq-dev && \
 	rm -rf /var/lib/apt/lists/*
