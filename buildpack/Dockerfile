@@ -7,9 +7,11 @@ USER root
 
 
 RUN apt-get update && apt-get upgrade -y && apt-get install curl gpg apt-transport-https --yes
-RUN curl -LO https://packages.buildkite.com/helm-linux/helm-debian/gpgkey -o gpgkey
-RUN cat gpgkey
-RUN gpg --dearmor gpgkey | tee /usr/share/keyrings/helm.gpg > /dev/null
+RUN curl -LO https://packages.buildkite.com/helm-linux/helm-debian/gpgkey -o helm.asc
+RUN cat helm.asc
+RUN gpg --dearmor helm.asc > helm.gpg
+RUN cat helm.gpg
+RUN mv helm.gpg /usr/share/keyrings/helm.gpg
 RUN echo "deb [signed-by=/usr/share/keyrings/helm.gpg] https://packages.buildkite.com/helm-linux/helm-debian/any/ any main" | tee /etc/apt/sources.list.d/helm-stable-debian.list
 RUN apt-get update
 RUN apt-get install helm
