@@ -17,6 +17,12 @@ RUN add-apt-repository -y ppa:apt-fast/stable && \
     apt-get install -y apt-fast && \
 	rm -rf /var/lib/apt/lists/*
 
+# Node setup
+RUN curl -fsSL https://deb.nodesource.com/setup_24.x -o nodesource_setup.sh && \
+	chmod +x nodesource_setup.sh && \
+	./nodesource_setup.sh && \
+	rm -f nodesource_setup.sh
+
 # install required ci/cd packages
 RUN apt-fast update && apt-fast install -y  \
 	ca-certificates \
