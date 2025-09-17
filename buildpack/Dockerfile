@@ -5,19 +5,17 @@ ENV JDK_VERSION="21"
 USER root
 
 # setup for apt installs
-RUN apt-get update && \
-	apt-get install -y \
+RUN apt-get update && apt-get install -y \
 	software-properties-common \
 	curl \
 	ca-certificates \
-	apt-transport-https && \
-	rm -rf /var/lib/apt/lists/*
+	apt-transport-https
 
 # node repo setup
-RUN curl -fsSL https://deb.nodesource.com/setup_24.x -o nodesource_setup.sh && \
-	chmod +x nodesource_setup.sh && \
-	./nodesource_setup.sh && \
-	rm -f nodesource_setup.sh
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x -o nodesource_setup.sh
+RUN chmod +x nodesource_setup.sh
+RUN ./nodesource_setup.sh
+RUN rm -f nodesource_setup.sh
 
 RUN apt-get update && apt-get install -y nodejs
 
