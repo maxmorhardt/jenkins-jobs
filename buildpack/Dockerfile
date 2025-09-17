@@ -4,15 +4,6 @@ ENV JDK_VERSION="21"
 
 USER root
 
-
-
-RUN apt-get update && apt-get upgrade -y && apt-get install curl gpg apt-transport-https wget --yes
-RUN echo "deb [trusted=yes] https://packages.buildkite.com/helm-linux/helm-debian/any/ any main" | tee /etc/apt/sources.list.d/helm-stable-debian.list
-RUN apt-get update
-RUN apt-get install helm
-
-
-
 # setup for apt installs
 RUN apt-get update && \
 	apt-get upgrade -y && \
@@ -21,6 +12,7 @@ RUN apt-get update && \
 
 RUN add-apt-repository -y ppa:apt-fast/stable && \
 	add-apt-repository -y ppa:xtradeb/apps && \
+	echo "deb [trusted=yes] https://packages.buildkite.com/helm-linux/helm-debian/any/ any main" | tee /etc/apt/sources.list.d/helm-stable-debian.list && \
     apt-get update && \
     apt-get install -y apt-fast && \
 	rm -rf /var/lib/apt/lists/*
@@ -28,7 +20,10 @@ RUN add-apt-repository -y ppa:apt-fast/stable && \
 # install required ci/cd packages
 RUN apt-fast update && apt-fast install -y  \
 	ca-certificates \
+	apt-transport-https \
+	gpg \
 	curl \
+	wget \
 	unzip \
 	git \
 	chromium \
@@ -37,6 +32,7 @@ RUN apt-fast update && apt-fast install -y  \
 	maven \
 	nodejs \
 	npm \
+	helm \
 	libpq-dev && \
 	rm -rf /var/lib/apt/lists/*
 
