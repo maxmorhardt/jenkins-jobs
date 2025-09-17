@@ -6,8 +6,8 @@ USER root
 
 
 
-RUN apt-get update && apt-get upgrade -y && apt-get install curl gpg apt-transport-https --yes
-RUN curl -LO https://packages.buildkite.com/helm-linux/helm-debian/gpgkey -o helm.asc
+RUN apt-get update && apt-get upgrade -y && apt-get install curl gpg apt-transport-https wget --yes
+RUN wget -O helm.asc https://packages.buildkite.com/helm-linux/helm-debian/gpgkey
 RUN cat helm.asc
 RUN gpg --dearmor helm.asc > helm.gpg
 RUN cat helm.gpg
