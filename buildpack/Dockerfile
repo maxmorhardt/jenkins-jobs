@@ -33,6 +33,7 @@ RUN apt-get update && apt-get install -y \
 	nodejs \
 	helm \
 	libpq-dev && \
+	golang-go \
 	rm -rf /var/lib/apt/lists/*
 
 # install kubectl
