@@ -21,7 +21,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x -o nodesource_
 
 # chromium golang and helm repo setup
 RUN add-apt-repository -y ppa:xtradeb/apps && \
-		add-apt-repository ppa:longsleep/golang-backports && \
+		add-apt-repository -y ppa:longsleep/golang-backports && \
     echo "deb [trusted=yes] https://packages.buildkite.com/helm-linux/helm-debian/any/ any main" | tee /etc/apt/sources.list.d/helm-stable-debian.list
 
 RUN apt-get update && apt-get install -y \
