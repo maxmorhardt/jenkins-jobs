@@ -13,6 +13,12 @@ RUN apt-get update && apt-get install -y \
 	apt-transport-https && \
 	rm -rf /var/lib/apt/lists/*
 
+# golang setup
+RUN add-apt-repository -y ppa:longsleep/golang-backports && \
+		apt-get update && \
+		apt-get install -y golang-go && \
+		rm -rf /var/lib/apt/lists/*
+
 # node repo setup
 RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x -o nodesource_setup.sh && \
 		chmod +x nodesource_setup.sh && \
@@ -21,7 +27,6 @@ RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x -o nodesource_
 
 # chromium golang and helm repo setup
 RUN add-apt-repository -y ppa:xtradeb/apps && \
-		add-apt-repository -y ppa:longsleep/golang-backports && \
     echo "deb [trusted=yes] https://packages.buildkite.com/helm-linux/helm-debian/any/ any main" | tee /etc/apt/sources.list.d/helm-stable-debian.list
 
 RUN apt-get update && apt-get install -y \
@@ -34,7 +39,6 @@ RUN apt-get update && apt-get install -y \
 		nodejs \
 		helm \
 		libpq-dev && \
-		golang-go && \
 		rm -rf /var/lib/apt/lists/*
 
 # install kubectl

@@ -2,8 +2,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: buildpack
+  namespace: maxstash-apps
   labels:
-    app: nginbuildpackx
+    app: buildpack
 spec:
   replicas: 1
   selector:
