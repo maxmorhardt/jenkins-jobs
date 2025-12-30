@@ -81,8 +81,7 @@ Performs PostgreSQL major version migrations with automatic backup and restore.
 **Triggers:** Manual
 
 **Parameters:**
-- `HELM_VERSION`: PostgreSQL Helm chart version (default: 0.0.1)
-- `CONFIRM_MIGRATION`: Must be checked to proceed with migration on main branch
+- `HELM_VERSION`: PostgreSQL Helm chart version
 
 ---
 
