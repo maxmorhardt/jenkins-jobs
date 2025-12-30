@@ -18,7 +18,8 @@ pipeline {
 	environment { 
 		APP_NAME = 'jenkins-buildpack'
 		GITHUB_URL = 'https://github.com/maxmorhardt/jenkins-jobs'
-		NAMESPACE = 'jenkins'
+		NAMESPACE = 'maxstash-apps'
+
 		KUBECONFIG = credentials('kube-config')
 	}
 
@@ -68,25 +69,25 @@ pipeline {
 			}
 		}
 
-		stage('CI') {
-			steps {
-				script {
-					withCredentials([usernamePassword(credentialsId: 'docker', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
-						sh 'echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin'
+		// stage('CI') {
+		// 	steps {
+		// 		script {
+		// 			withCredentials([usernamePassword(credentialsId: 'docker', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+		// 				sh 'echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin'
 						
-						sh """
-							docker buildx build \
-								--platform linux/arm64/v8 \
-								--push \
-								--tag $DOCKER_USERNAME/$APP_NAME:$VERSION \
-								--tag $DOCKER_USERNAME/$APP_NAME:latest \
-								--file buildpack/Dockerfile \
-								.
-						"""
-					}
-				}
-			}
-		}
+		// 				sh """
+		// 					docker buildx build \
+		// 						--platform linux/arm64/v8 \
+		// 						--push \
+		// 						--tag $DOCKER_USERNAME/$APP_NAME:$VERSION \
+		// 						--tag $DOCKER_USERNAME/$APP_NAME:latest \
+		// 						--file buildpack/Dockerfile \
+		// 						.
+		// 				"""
+		// 			}
+		// 		}
+		// 	}
+		// }
 
 		stage('Validate') {
 			steps {
