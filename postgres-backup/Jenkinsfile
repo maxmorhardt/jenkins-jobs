@@ -37,6 +37,9 @@ pipeline {
 
 	stages {
 		stage('Backup Database') {
+			when {
+				branch 'main'
+			}
 			steps {
 				script {
 					env.BACKUP_FILE = getBackupFilename()
