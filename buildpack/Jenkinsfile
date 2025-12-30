@@ -47,7 +47,7 @@ pipeline {
 			steps {
 				script {
 					echo "Waiting for Docker daemon to be ready..."
-					def maxAttempts = 30
+					def maxAttempts = 5
 					def ready = false
 					
 					for (int i = 1; i <= maxAttempts; i++) {
@@ -134,7 +134,7 @@ pipeline {
 								kubectl exec ${podName} -n ${NAMESPACE} -- chromium --version
 								
 								echo "=== ChromeDriver Version ==="
-								kubectl exec ${podName} -n ${NAMESPACE} -- chromium-driver --version
+								kubectl exec ${podName} -n ${NAMESPACE} -- chromedriver --version
 								
 								echo "=== Git Version ==="
 								kubectl exec ${podName} -n ${NAMESPACE} -- git --version
