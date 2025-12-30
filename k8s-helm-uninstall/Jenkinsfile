@@ -6,6 +6,11 @@ pipeline {
 		}
 	}
 
+	options {
+		timeout(time: 5, unit: 'MINUTES')
+		buildDiscarder(logRotator(numToKeepStr: '5'))
+	}
+
 	parameters {
 		string(name: 'CHART_NAME', defaultValue: params.RESOURCE_NAME ?: '', description: 'Name of chart', trim: true)
 		string(name: 'NAMESPACE', defaultValue: params.NAMESPACE ?: '', description: 'Namespace of chart', trim: true)

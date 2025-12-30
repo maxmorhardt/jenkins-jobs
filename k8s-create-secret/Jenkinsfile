@@ -6,6 +6,11 @@ pipeline {
 		}
 	}
 
+	options {
+		timeout(time: 5, unit: 'MINUTES')
+		buildDiscarder(logRotator(numToKeepStr: '5'))
+	}
+
 	parameters {
 		string(name: 'SECRET_NAME', defaultValue: params.SECRET_NAME ?: '', description: 'Name of secret', trim: true)
 		password(name: 'SECRET_DATA', defaultValue: '', description: 'Data within secret in format key=value,key2=value2')

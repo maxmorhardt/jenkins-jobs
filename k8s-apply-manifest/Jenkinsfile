@@ -6,6 +6,11 @@ pipeline {
 		}
 	}
 
+	options {
+		timeout(time: 5, unit: 'MINUTES')
+		buildDiscarder(logRotator(numToKeepStr: '5'))
+	}
+
 	parameters {
 		string(name: 'GITHUB_URL', defaultValue: params.GITHUB_URL ?: '', description: 'GitHub URL', trim: true)
 		string(name: 'BRANCH', defaultValue: params.BRANCH ?: '', description: 'GitHub branch', trim: true)

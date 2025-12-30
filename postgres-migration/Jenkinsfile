@@ -18,7 +18,7 @@ pipeline {
 	}
 
 	options {
-		timeout(time: 30, unit: 'MINUTES')
+		timeout(time: 45, unit: 'MINUTES')
 		buildDiscarder(logRotator(numToKeepStr: '5'))
 	}
 
@@ -28,7 +28,8 @@ pipeline {
 	}
 
 	environment {
-		GITHUB_URL = 'https://github.com/maxmorhardt/k8s'
+		K8S_GITHUB_URL = 'https://github.com/maxmorhardt/k8s'
+		JOBS_GITHUB_URL = 'https://github.com/maxmorhardt/jenkins-jobs'
 
 		DOCKER_REGISTRY = 'docker.io'
 		DOCKER_REGISTRY_FULL = "oci://${env.DOCKER_REGISTRY}"
@@ -39,6 +40,8 @@ pipeline {
 		
 		KUBECONFIG = credentials('kube-config')
 		POSTGRES = credentials('postgres')
+		
+		DRY_RUN = "${env.BRANCH_NAME != 'main'}"
 	}
 
 	stages {
@@ -46,7 +49,7 @@ pipeline {
 			steps {
 				script {
 					if (!params.CONFIRM_MIGRATION) {
-						error('Migration not confirmed. Check CONFIRM_MIGRATION parameter to proceed.')
+						error('Migration not confirmed. Check CONFIRM_MIGRATION parameter to proceed')
 					}
 
 					echo "PostgreSQL Major Version Migration"
@@ -63,7 +66,17 @@ pipeline {
 						]],
 						userRemoteConfigs: [[
 							credentialsId: 'github',
-							url: "$GITHUB_URL"
+							url: "$K8S_GITHUB_URL"
+						]]
+					)
+
+					checkout scmGit(
+						branches: [[
+							name: "$BRANCH_NAME"
+						]],
+						userRemoteConfigs: [[
+							credentialsId: 'github',
+							url: "$JOBS_GITHUB_URL"
 						]]
 					)
 
@@ -93,18 +106,22 @@ pipeline {
 		}
 
 		stage('Uninstall Legacy Postgres') {
+			when {
+				expression { env.DRY_RUN == 'false' }
+			}
 			steps {
-				dir('postgres') {
-					script {
-						sh "helm uninstall $APP_NAME -n $NAMESPACE"
-					}
+				script {
+					sh "helm uninstall $APP_NAME -n $NAMESPACE"
 				}
 			}
 		}
 
 		stage('Delete Legacy Data') {
+			when {
+				expression { env.DRY_RUN == 'false' }
+			}
 			steps {
-				dir('postgres') {
+				dir('postgres-migration') {
 					script {
 						sh """
 							kubectl delete pvc data-${POD_NAME} -n $NAMESPACE
@@ -120,6 +137,9 @@ pipeline {
 		}
 
 		stage('Deploy New Postgres') {
+			when {
+				expression { env.DRY_RUN == 'false' }
+			}
 			steps {
 				dir('postgres') {
 					script {
@@ -141,6 +161,9 @@ pipeline {
 		}
 
 		stage('Restore Database') {
+			when {
+				expression { env.DRY_RUN == 'false' }
+			}
 			steps {
 				dir('postgres') {
 					script {

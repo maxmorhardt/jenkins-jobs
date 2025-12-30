@@ -6,6 +6,11 @@ pipeline {
 		}
 	}
 
+	options {
+		timeout(time: 5, unit: 'MINUTES')
+		buildDiscarder(logRotator(numToKeepStr: '5'))
+	}
+
 	parameters {
 		string(name: 'RESOURCE_TYPE', defaultValue: params.RESOURCE_TYPE ?: '', description: 'Type of resource (i.e. pv, ingress)', trim: true)
 		string(name: 'RESOURCE_NAME', defaultValue: params.RESOURCE_NAME ?: '', description: 'Name of resource', trim: true)
