@@ -24,7 +24,6 @@ pipeline {
 
 	parameters {
 		string(name: 'HELM_VERSION', defaultValue: params.HELM_VERSION ?: '0.0.1', description: 'Helm version', trim: true)
-		booleanParam(name: 'CONFIRM_MIGRATION', defaultValue: false, description: 'Confirm PostgreSQL major version migration (will cause downtime)')
 	}
 
 	environment {
@@ -44,18 +43,6 @@ pipeline {
 	}
 
 	stages {
-		stage('Confirm Migration') {
-			steps {
-				script {
-					if (!params.CONFIRM_MIGRATION) {
-						error('Migration not confirmed. Check CONFIRM_MIGRATION parameter to proceed')
-					}
-
-					echo "PostgreSQL Major Version Migration"
-				}
-			}
-		}
-
 		stage('Setup') {
 			steps {
 				script {
