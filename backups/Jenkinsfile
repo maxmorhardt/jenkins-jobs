@@ -4,7 +4,7 @@ import java.time.format.DateTimeFormatter
 def getBackupFilename(serviceName) {
 	def formattedDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HHmmss"))
 	def fileName = "${serviceName}-backup-${formattedDate}.tar.gz"
-	
+
 	return fileName
 }
 
@@ -51,7 +51,7 @@ pipeline {
 		}
 
 		stage('Backup All Services') {
-			parallel {
+			stages {
 				stage('PostgreSQL') {
 					steps {
 						script {
