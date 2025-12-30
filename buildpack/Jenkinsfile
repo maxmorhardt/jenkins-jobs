@@ -7,7 +7,7 @@ pipeline {
 	}
 
 	options {
-		timeout(time: 5, unit: 'MINUTES')
+		timeout(time: 90, unit: 'MINUTES')
 		buildDiscarder(logRotator(numToKeepStr: '5'))
 	}
 
@@ -42,14 +42,49 @@ pipeline {
 			}
 		}
 
+		stage('Validate Docker Daemon') {
+			steps {
+				script {
+					echo "Waiting for Docker daemon to be ready..."
+					def maxAttempts = 30
+					def ready = false
+					
+					for (int i = 1; i <= maxAttempts; i++) {
+						def result = sh(script: 'docker info', returnStatus: true)
+						if (result == 0) {
+							echo "Docker daemon is ready"
+							ready = true
+							break
+						}
+
+						echo "Attempt ${i}/${maxAttempts}: Docker daemon not ready yet, waiting..."
+						sleep(2)
+					}
+					
+					if (!ready) {
+						error("Docker daemon failed to become ready after ${maxAttempts} attempts")
+					}
+					
+					sh 'docker info'
+				}
+			}
+		}
+
 		stage('CI') {
 			steps {
 				script {
 					withCredentials([usernamePassword(credentialsId: 'docker', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
 						sh 'echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin'
 						
-						sh "docker buildx build --platform linux/arm64/v8 . --tag $DOCKER_USERNAME/$APP_NAME:$VERSION --tag $DOCKER_USERNAME/$APP_NAME:latest --file buildpack/Dockerfile"
-						sh "docker push $DOCKER_USERNAME/$APP_NAME --all-tags"
+						sh """
+							docker buildx build \
+								--platform linux/arm64/v8 \
+								--push \
+								--tag $DOCKER_USERNAME/$APP_NAME:$VERSION \
+								--tag $DOCKER_USERNAME/$APP_NAME:latest \
+								--file buildpack/Dockerfile \
+								.
+						"""
 					}
 				}
 			}
