@@ -3,7 +3,8 @@ import java.time.format.DateTimeFormatter
 
 def getBackupFilename(serviceName) {
 	def formattedDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HHmmss"))
-	def fileName = "${serviceName}-backup-${formattedDate}.tar.gz"
+	def extension = serviceName == 'postgres' ? '.sql' : '.tar.gz'
+	def fileName = "${serviceName}-backup-${formattedDate}${extension}"
 
 	return fileName
 }
@@ -72,25 +73,27 @@ pipeline {
 					}
 				}
 
-				// stage('Loki') {
-				// 	steps {
-				// 		script {
-				// 			def backupFile = getBackupFilename('loki')
+				stage('Loki') {
+					steps {
+						script {
+							def backupFile = getBackupFilename('loki')
 							
-				// 			echo "Starting Loki backup to ${backupFile}"
+							echo "Starting Loki backup to ${backupFile}"
 
-				// 			sh """
-				// 				kubectl exec loki-0 -n maxstash-global -- sh -c 'apk add --no-cache tar && tar czf /tmp/backup.tar.gz -C /loki/chunks .'
-				// 				kubectl cp maxstash-global/loki-0:/tmp/backup.tar.gz ${backupFile}
-				// 			"""
+							sh """
+								mkdir -p loki-backup-tmp
+								kubectl cp maxstash-global/loki-0:/loki/chunks loki-backup-tmp/ 
+								tar czf ${backupFile} -C loki-backup-tmp .
+								rm -rf loki-backup-tmp
+							"""
 
-				// 			archiveArtifacts artifacts: "${backupFile}", fingerprint: true
-				// 			env.LOKI_BACKUP_FILE = backupFile
+							archiveArtifacts artifacts: "${backupFile}", fingerprint: true
+							env.LOKI_BACKUP_FILE = backupFile
 							
-				// 			echo "Loki backup completed: ${backupFile}"
-				// 		}
-				// 	}
-				// }
+							echo "Loki backup completed: ${backupFile}"
+						}
+					}
+				}
 
 				stage('Prometheus') {
 					steps {
@@ -100,8 +103,9 @@ pipeline {
 							echo "Starting Prometheus backup to ${backupFile}"
 
 							sh """
-								kubectl exec prometheus-server-0 -n maxstash-global -- tar czf /tmp/backup.tar.gz -C /data .
-								kubectl cp maxstash-global/prometheus-server-0:/tmp/backup.tar.gz ${backupFile}
+								PROM_POD=\$(kubectl get pods -n maxstash-global -l app.kubernetes.io/name=prometheus -o jsonpath='{.items[0].metadata.name}')
+								kubectl exec \${PROM_POD} -n maxstash-global -- tar czf /tmp/backup.tar.gz -C /data .
+								kubectl cp maxstash-global/\${PROM_POD}:/tmp/backup.tar.gz ${backupFile}
 							"""
 
 							archiveArtifacts artifacts: "${backupFile}", fingerprint: true
@@ -181,11 +185,11 @@ pipeline {
 							echo "Starting Jenkins backup to ${backupFile}"
 
 							sh """
-								kubectl exec jenkins-0 -n maxstash-global -- tar czf /tmp/backup.tar.gz \\
-									-C /var/jenkins_home \\
-									--exclude='workspace/*' \\
-									--exclude='caches/*' \\
-									--exclude='logs/*' \\
+								kubectl exec jenkins-0 -n maxstash-global -- tar czf /tmp/backup.tar.gz \
+									-C /var/jenkins_home \
+									--exclude='workspace/*' \
+									--exclude='caches/*' \
+									--exclude='logs/*' \
 									jobs/ config.xml *.xml plugins/ users/ secrets/
 								kubectl cp maxstash-global/jenkins-0:/tmp/backup.tar.gz ${backupFile}
 							"""
