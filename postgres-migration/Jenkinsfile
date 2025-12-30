@@ -143,8 +143,13 @@ pipeline {
 								--history-max=3 \
 								--namespace $NAMESPACE \
 								--version $HELM_VERSION \
-								--values values.yaml
+								--values values.yaml \
+								--set primary.service.type=ClusterIP \
+								--set primary.readinessProbe.enabled=false
 						"""
+						
+						echo "Waiting for PostgreSQL pod to be ready for restore..."
+						sh "kubectl wait --for=condition=ready pod/${POD_NAME} -n ${NAMESPACE} --timeout=300s"
 					}
 				}
 			}
@@ -154,10 +159,37 @@ pipeline {
 			steps {
 				dir('postgres') {
 					script {
+						echo "Restoring database (connections will be rejected during restore)"
+						
 						sh """
 							kubectl cp ${BACKUP_FILE} ${NAMESPACE}/${POD_NAME}:/tmp/restore.sql
 							kubectl exec ${POD_NAME} -n ${NAMESPACE} -- bash -c 'PGPASSWORD=${POSTGRES_PSW} psql -U ${POSTGRES_USR} -d postgres -f /tmp/restore.sql'
 						"""
+						
+						echo "Database restored successfully"
+					}
+				}
+			}
+		}
+		
+		stage('Enable Connections') {
+			steps {
+				dir('postgres') {
+					script {
+						echo "Enabling readiness probes to allow connections"
+						
+						sh """
+							helm upgrade $APP_NAME $DOCKER_REGISTRY_FULL/bitnamicharts/postgresql \
+								--install \
+								--atomic \
+								--debug \
+								--history-max=3 \
+								--namespace $NAMESPACE \
+								--version $HELM_VERSION \
+								--values values.yaml
+						"""
+						
+						echo "PostgreSQL is now ready to accept connections"
 					}
 				}
 			}
