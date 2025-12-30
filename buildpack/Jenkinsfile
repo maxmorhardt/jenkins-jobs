@@ -64,8 +64,6 @@ pipeline {
 					if (!ready) {
 						error("Docker daemon failed to become ready after ${maxAttempts} attempts")
 					}
-					
-					sh 'docker info'
 				}
 			}
 		}
