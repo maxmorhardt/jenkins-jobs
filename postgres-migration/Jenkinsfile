@@ -37,11 +37,10 @@ pipeline {
 		APP_NAME = "db"
 		NAMESPACE = "maxstash-global"
 		POD_NAME = "${APP_NAME}-postgresql-0"
+		BRANCH_NAME = 'main'
 		
 		KUBECONFIG = credentials('kube-config')
 		POSTGRES = credentials('postgres')
-		
-		DRY_RUN = "${env.BRANCH_NAME != 'main'}"
 	}
 
 	stages {
@@ -106,9 +105,6 @@ pipeline {
 		}
 
 		stage('Uninstall Legacy Postgres') {
-			when {
-				expression { env.DRY_RUN == 'false' }
-			}
 			steps {
 				script {
 					sh "helm uninstall $APP_NAME -n $NAMESPACE"
@@ -117,9 +113,6 @@ pipeline {
 		}
 
 		stage('Delete Legacy Data') {
-			when {
-				expression { env.DRY_RUN == 'false' }
-			}
 			steps {
 				dir('postgres-migration') {
 					script {
@@ -137,9 +130,6 @@ pipeline {
 		}
 
 		stage('Deploy New Postgres') {
-			when {
-				expression { env.DRY_RUN == 'false' }
-			}
 			steps {
 				dir('postgres') {
 					script {
@@ -161,9 +151,6 @@ pipeline {
 		}
 
 		stage('Restore Database') {
-			when {
-				expression { env.DRY_RUN == 'false' }
-			}
 			steps {
 				dir('postgres') {
 					script {

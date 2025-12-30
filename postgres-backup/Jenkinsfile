@@ -31,6 +31,7 @@ pipeline {
 		APP_NAME = "db"
 		NAMESPACE = "maxstash-global"
 		POD_NAME = "${APP_NAME}-postgresql-0"
+		BRANCH_NAME = 'main'
 		
 		KUBECONFIG = credentials('kube-config')
 		POSTGRES = credentials('postgres')
@@ -38,9 +39,6 @@ pipeline {
 
 	stages {
 		stage('Backup Database') {
-			when {
-				branch 'main'
-			}
 			steps {
 				script {
 					env.BACKUP_FILE = getBackupFilename()
