@@ -150,44 +150,19 @@ pipeline {
 
 		stage('Restore Database') {
 			steps {
-				dir('k8s/postgres') {
-					script {
-						echo "Restoring database (connections will be rejected during restore)"
-						
-						sh """
-							kubectl cp ${BACKUP_FILE} ${NAMESPACE}/${POD_NAME}:/tmp/restore.sql -c postgresql
-							kubectl exec ${POD_NAME} -n ${NAMESPACE} -c postgresql -- bash -c 'PGPASSWORD=${POSTGRES_PSW} psql -U ${POSTGRES_USR} -d postgres -f /tmp/restore.sql'
-						"""
-						
-						echo "Database restored successfully"
-					}
+				script {
+					echo "Restoring database (connections will be rejected during restore)"
+					
+					sh """
+						kubectl cp ${BACKUP_FILE} ${NAMESPACE}/${POD_NAME}:/tmp/restore.sql -c postgresql
+						kubectl exec ${POD_NAME} -n ${NAMESPACE} -c postgresql -- bash -c 'PGPASSWORD=${POSTGRES_PSW} psql -U ${POSTGRES_USR} -d postgres -f /tmp/restore.sql'
+					"""
+					
+					echo "Database restored successfully"
 				}
 			}
 		}
 		
-		stage('Enable Connections') {
-			steps {
-				dir('k8s/postgres') {
-					script {
-						echo "Enabling readiness probes to allow connections"
-						
-						sh """
-							helm upgrade $APP_NAME $DOCKER_REGISTRY_FULL/bitnamicharts/postgresql \
-								--install \
-								--atomic \
-								--debug \
-								--history-max=3 \
-								--namespace $NAMESPACE \
-								--version $HELM_VERSION \
-								--values values.yaml
-						"""
-						
-						echo "PostgreSQL is now ready to accept connections"
-					}
-				}
-			}
-		}
-
 		stage('Validate') {
 			steps {
 				script {
@@ -213,6 +188,29 @@ pipeline {
 					"""
 
 					echo "Verification complete"
+				}
+			}
+		}
+
+		stage('Enable Connections') {
+			steps {
+				dir('k8s/postgres') {
+					script {
+						echo "Enabling readiness probes to allow connections"
+						
+						sh """
+							helm upgrade $APP_NAME $DOCKER_REGISTRY_FULL/bitnamicharts/postgresql \
+								--install \
+								--atomic \
+								--debug \
+								--history-max=3 \
+								--namespace $NAMESPACE \
+								--version $HELM_VERSION \
+								--values values.yaml
+						"""
+						
+						echo "PostgreSQL is now ready to accept connections"
+					}
 				}
 			}
 		}
