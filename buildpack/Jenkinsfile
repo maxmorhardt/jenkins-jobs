@@ -94,65 +94,69 @@ pipeline {
 				container('buildpack') {
 					dir('buildpack') {
 						script {
-							echo "Deploying ${APP_NAME} for validation"
+							try {
+								echo "Deploying ${APP_NAME} for validation"
 
-							sh """
-								kubectl apply -f deployment.yaml -n ${NAMESPACE}
-								kubectl rollout status deployment/${APP_NAME} -n ${NAMESPACE} --timeout=300s
-							"""
+								sh """
+									kubectl apply -f deployment.yaml -n ${NAMESPACE}
+									kubectl rollout status deployment/${APP_NAME} -n ${NAMESPACE} --timeout=300s
+								"""
 
-							def podName = sh(
-								script: "kubectl get pod -n ${NAMESPACE} -l app=${APP_NAME} -o jsonpath='{.items[0].metadata.name}'",
-								returnStdout: true
-							).trim()
+								def podName = sh(
+									script: "kubectl get pod -n ${NAMESPACE} -l app=${APP_NAME} -o jsonpath='{.items[0].metadata.name}'",
+									returnStdout: true
+								).trim()
 
-							echo "Validating installed tools in pod: ${podName}"
+								echo "Validating installed tools in pod: ${podName}"
 
-							sh """
-								echo "=== Go Version ==="
-								kubectl exec ${podName} -n ${NAMESPACE} -- go version
-								
-								echo "=== Node Version ==="
-								kubectl exec ${podName} -n ${NAMESPACE} -- node --version
-								
-								echo "=== NPM Version ==="
-								kubectl exec ${podName} -n ${NAMESPACE} -- npm --version
-								
-								echo "=== Java Version ==="
-								kubectl exec ${podName} -n ${NAMESPACE} -- java -version
-								
-								echo "=== Maven Version ==="
-								kubectl exec ${podName} -n ${NAMESPACE} -- mvn --version
-								
-								echo "=== Kubectl Version ==="
-								kubectl exec ${podName} -n ${NAMESPACE} -- kubectl version --client
-								
-								echo "=== Helm Version ==="
-								kubectl exec ${podName} -n ${NAMESPACE} -- helm version
-								
-								echo "=== Chromium Version ==="
-								kubectl exec ${podName} -n ${NAMESPACE} -- chromium --version
-								
-								echo "=== ChromeDriver Version ==="
-								kubectl exec ${podName} -n ${NAMESPACE} -- chromedriver --version
-								
-								echo "=== Git Version ==="
-								kubectl exec ${podName} -n ${NAMESPACE} -- git --version
-								
-								echo "=== Curl Version ==="
-								kubectl exec ${podName} -n ${NAMESPACE} -- curl --version
-								
-								echo "=== Unzip Version ==="
-								kubectl exec ${podName} -n ${NAMESPACE} -- unzip -v
-							"""
+								sh """
+									echo "=== Go Version ==="
+									kubectl exec ${podName} -n ${NAMESPACE} -- go version
+									
+									echo "=== Node Version ==="
+									kubectl exec ${podName} -n ${NAMESPACE} -- node --version
+									
+									echo "=== NPM Version ==="
+									kubectl exec ${podName} -n ${NAMESPACE} -- npm --version
+									
+									echo "=== Java Version ==="
+									kubectl exec ${podName} -n ${NAMESPACE} -- java -version
+									
+									echo "=== Maven Version ==="
+									kubectl exec ${podName} -n ${NAMESPACE} -- mvn --version
+									
+									echo "=== Kubectl Version ==="
+									kubectl exec ${podName} -n ${NAMESPACE} -- kubectl version --client
+									
+									echo "=== Helm Version ==="
+									kubectl exec ${podName} -n ${NAMESPACE} -- helm version
+									
+									echo "=== Chromium Version ==="
+									kubectl exec ${podName} -n ${NAMESPACE} -- chromium --version
+									
+									echo "=== ChromeDriver Version ==="
+									kubectl exec ${podName} -n ${NAMESPACE} -- chrome-driver --version
+									
+									echo "=== Git Version ==="
+									kubectl exec ${podName} -n ${NAMESPACE} -- git --version
+									
+									echo "=== Curl Version ==="
+									kubectl exec ${podName} -n ${NAMESPACE} -- curl --version
+									
+									echo "=== Unzip Version ==="
+									kubectl exec ${podName} -n ${NAMESPACE} -- unzip -v
+								"""
 
-							echo "Validation successful, tearing down"
+								echo "Validation successful"
+							} finally {
+								echo "Tearing down deployment"
+								
+								sh """
+									kubectl delete -f deployment.yaml -n ${NAMESPACE} || true
+								"""
 
-							sh """
-								kubectl delete -f deployment.yaml -n ${NAMESPACE}
-							"""
-
-							echo "Cleanup complete"
+								echo "Cleanup complete"
+							}
 						}
 					}
 				}
