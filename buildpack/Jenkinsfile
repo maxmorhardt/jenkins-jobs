@@ -134,7 +134,7 @@ pipeline {
 								kubectl exec ${podName} -n ${NAMESPACE} -- chromium --version
 								
 								echo "=== ChromeDriver Version ==="
-								kubectl exec ${podName} -n ${NAMESPACE} -- chrome-driver --version
+								kubectl exec ${podName} -n ${NAMESPACE} -- chromedriver --version
 								
 								echo "=== Git Version ==="
 								kubectl exec ${podName} -n ${NAMESPACE} -- git --version
