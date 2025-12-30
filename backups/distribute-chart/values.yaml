@@ -1,0 +1,43 @@
+serviceName: ''
+backupFile: ''
+backupFilePath: ''
+retentionDays: 7
+
+job:
+  name: distribute-backup
+  parallelism: 1
+  completions: 1
+  backoffLimit: 3
+  image: ubuntu
+  tag: '24.04'
+  labels:
+    app: backup-distributor
+  containerName: distributor
+  command: ['/bin/bash', '/scripts/distribute.sh']
+  securityContext:
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+
+affinity:
+  podAntiAffinity:
+    topologyKey: kubernetes.io/hostname
+    labelKey: app
+    labelValue: backup-distributor
+
+volumes:
+  backupSource:
+    name: backup-source
+    mountPath: /backup-source
+    configMapName: backup-data
+  nodeStorage:
+    name: node-storage
+    mountPath: /node-backups
+  scripts:
+    name: scripts
+    mountPath: /scripts
+    configMapName: backup-distributor-script
+    defaultMode: 0755
+
+storage:
+  hostPath: /var/k8s-backups

@@ -4,6 +4,7 @@ import java.time.format.DateTimeFormatter
 def getBackupFilename(serviceName) {
 	def formattedDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HHmmss"))
 	def fileName = "${serviceName}-backup-${formattedDate}.tar.gz"
+	
 	return fileName
 }
 
@@ -219,41 +220,23 @@ pipeline {
 
 					echo "Distributing backups to ${nodeCount} nodes"
 
-					// Apply common resources once
-					sh "kubectl apply -f distribute-to-nodes.yaml"
-
 					services.each { service ->
 						if (service.file) {
 							echo "Distributing ${service.name} backup: ${service.file}"
 
 							sh """
-								kubectl create configmap backup-data \
-									--from-file=${service.file} \
-									-n ${service.namespace} \
-									--dry-run=client -o yaml | kubectl apply -f -
-							"""
+								helm upgrade --install backup-distributor backups/distribute-chart \
+									--namespace ${service.namespace} \
+									--set serviceName=${service.name} \
+									--set backupFile=${service.file} \
+									--set backupFilePath=${service.file} \
+									--set job.parallelism=${nodeCount} \
+									--set job.completions=${nodeCount} \
+									--set-file backupFilePath=${service.file} \
+									--wait \
+									--timeout 5m
 
-							sh """
-								kubectl delete job distribute-backup -n ${service.namespace} --ignore-not-found=true
-								sleep 2
-							"""
-
-							sh """
-								cat distribute-to-nodes.yaml | \\
-								sed 's/SERVICE_NAME/${service.name}/g' | \\
-								sed 's/BACKUP_FILE/${service.file}/g' | \\
-								sed 's/parallelism: 1/parallelism: ${nodeCount}/g' | \\
-								sed 's/completions: 1/completions: ${nodeCount}/g' | \\
-								kubectl apply -f - -n ${service.namespace}
-							"""
-
-							sh """
-								kubectl wait --for=condition=complete job/distribute-backup -n ${service.namespace} --timeout=300s
-							"""
-
-							sh """
-								kubectl delete job distribute-backup -n ${service.namespace}
-								kubectl delete configmap backup-data -n ${service.namespace}
+								helm uninstall backup-distributor -n ${service.namespace}
 							"""
 
 							echo "✓ ${service.name} backup distributed"

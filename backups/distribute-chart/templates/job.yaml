@@ -1,0 +1,58 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Values.job.name }}
+spec:
+  parallelism: {{ .Values.job.parallelism }}
+  completions: {{ .Values.job.completions }}
+  backoffLimit: {{ .Values.job.backoffLimit }}
+  template:
+    metadata:
+      labels:
+        {{- range $key, $value := .Values.job.labels }}
+        {{ $key }}: {{ $value }}
+        {{- end }}
+    spec:
+      restartPolicy: OnFailure
+      securityContext:
+        runAsUser: {{ .Values.job.securityContext.runAsUser }}
+        runAsGroup: {{ .Values.job.securityContext.runAsGroup }}
+        fsGroup: {{ .Values.job.securityContext.fsGroup }}
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: {{ .Values.affinity.podAntiAffinity.labelKey }}
+                    operator: In
+                    values:
+                      - {{ .Values.affinity.podAntiAffinity.labelValue }}
+              topologyKey: {{ .Values.affinity.podAntiAffinity.topologyKey }}
+      containers:
+        - name: {{ .Values.job.containerName }}
+          image: {{ .Values.job.image }}:{{ .Values.job.tag }}
+          command: {{ .Values.job.command | toJson }}
+          args:
+            - {{ .Values.serviceName | quote }}
+            - {{ .Values.backupFile | quote }}
+            - {{ .Values.retentionDays | quote }}
+          volumeMounts:
+            - name: {{ .Values.volumes.backupSource.name }}
+              mountPath: {{ .Values.volumes.backupSource.mountPath }}
+              readOnly: true
+            - name: {{ .Values.volumes.nodeStorage.name }}
+              mountPath: {{ .Values.volumes.nodeStorage.mountPath }}
+            - name: {{ .Values.volumes.scripts.name }}
+              mountPath: {{ .Values.volumes.scripts.mountPath }}
+      volumes:
+        - name: {{ .Values.volumes.backupSource.name }}
+          configMap:
+            name: {{ .Values.volumes.backupSource.configMapName }}
+        - name: {{ .Values.volumes.nodeStorage.name }}
+          hostPath:
+            path: {{ .Values.storage.hostPath }}
+            type: DirectoryOrCreate
+        - name: {{ .Values.volumes.scripts.name }}
+          configMap:
+            name: {{ .Values.volumes.scripts.configMapName }}
+            defaultMode: {{ .Values.volumes.scripts.defaultMode }}

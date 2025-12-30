@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backup-distributor-script
+data:
+  distribute.sh: |
+{{ .Files.Get "scripts/distribute.sh" | indent 4 }}
