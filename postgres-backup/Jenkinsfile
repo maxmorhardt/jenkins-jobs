@@ -3,7 +3,7 @@ import java.time.format.DateTimeFormatter
 
 def getBackupFilename() {
 	def formattedDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
-	def fileName = "postgres-backup-${formattedDate}-${BUILD_NUMBER % 2}.sql"
+	def fileName = "postgres-backup-${formattedDate}-${Integer.parseInt(BUILD_NUMBER) % 2}.sql"
 
 	echo "Created backup file name: ${fileName}"
 	return fileName
