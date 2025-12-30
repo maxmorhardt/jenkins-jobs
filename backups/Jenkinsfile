@@ -72,25 +72,25 @@ pipeline {
 					}
 				}
 
-				stage('Loki') {
-					steps {
-						script {
-							def backupFile = getBackupFilename('loki')
+				// stage('Loki') {
+				// 	steps {
+				// 		script {
+				// 			def backupFile = getBackupFilename('loki')
 							
-							echo "Starting Loki backup to ${backupFile}"
+				// 			echo "Starting Loki backup to ${backupFile}"
 
-							sh """
-								kubectl exec loki-0 -n maxstash-global -- tar czf /tmp/backup.tar.gz -C /loki/chunks .
-								kubectl cp maxstash-global/loki-0:/tmp/backup.tar.gz ${backupFile}
-							"""
+				// 			sh """
+				// 				kubectl exec loki-0 -n maxstash-global -- sh -c 'apk add --no-cache tar && tar czf /tmp/backup.tar.gz -C /loki/chunks .'
+				// 				kubectl cp maxstash-global/loki-0:/tmp/backup.tar.gz ${backupFile}
+				// 			"""
 
-							archiveArtifacts artifacts: "${backupFile}", fingerprint: true
-							env.LOKI_BACKUP_FILE = backupFile
+				// 			archiveArtifacts artifacts: "${backupFile}", fingerprint: true
+				// 			env.LOKI_BACKUP_FILE = backupFile
 							
-							echo "Loki backup completed: ${backupFile}"
-						}
-					}
-				}
+				// 			echo "Loki backup completed: ${backupFile}"
+				// 		}
+				// 	}
+				// }
 
 				stage('Prometheus') {
 					steps {
