@@ -1,0 +1,277 @@
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+
+def getBackupFilename(serviceName) {
+	def formattedDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HHmmss"))
+	def fileName = "${serviceName}-backup-${formattedDate}.tar.gz"
+	return fileName
+}
+
+pipeline {
+	agent {
+		kubernetes {
+			inheritFrom 'default'
+			defaultContainer 'buildpack'
+		}
+	}
+
+	triggers {
+		cron('H 2 * * *')
+	}
+
+	options {
+		timeout(time: 60, unit: 'MINUTES')
+		buildDiscarder(logRotator(numToKeepStr: '14'))
+	}
+
+	environment {
+		GITHUB_URL = 'https://github.com/maxmorhardt/jenkins-jobs'
+		BRANCH_NAME = 'main'
+
+		KUBECONFIG = credentials('kube-config')
+		POSTGRES = credentials('postgres')
+	}
+
+	stages {
+		stage('Setup') {
+			steps {
+				script {
+					checkout scmGit(
+						branches: [[
+							name: "$BRANCH_NAME"
+						]],
+						userRemoteConfigs: [[
+							credentialsId: 'github',
+							url: "$GITHUB_URL"
+						]]
+					)
+				}
+			}
+		}
+
+		stage('Backup All Services') {
+			parallel {
+				stage('PostgreSQL') {
+					steps {
+						script {
+							def backupFile = getBackupFilename('postgres')
+							
+							echo "Starting PostgreSQL backup to ${backupFile}"
+
+							sh """
+								kubectl exec db-postgresql-0 -n maxstash-global -c postgresql -- bash -c 'PGPASSWORD=${POSTGRES_PSW} pg_dumpall -U ${POSTGRES_USR} > /tmp/backup.sql'
+								kubectl cp maxstash-global/db-postgresql-0:/tmp/backup.sql ${backupFile} -c postgresql
+							"""
+
+							archiveArtifacts artifacts: "${backupFile}", fingerprint: true
+							env.POSTGRES_BACKUP_FILE = backupFile
+							
+							echo "PostgreSQL backup completed: ${backupFile}"
+						}
+					}
+				}
+
+				stage('Loki') {
+					steps {
+						script {
+							def backupFile = getBackupFilename('loki')
+							
+							echo "Starting Loki backup to ${backupFile}"
+
+							sh """
+								kubectl exec loki-0 -n maxstash-global -- tar czf /tmp/backup.tar.gz -C /loki/chunks .
+								kubectl cp maxstash-global/loki-0:/tmp/backup.tar.gz ${backupFile}
+							"""
+
+							archiveArtifacts artifacts: "${backupFile}", fingerprint: true
+							env.LOKI_BACKUP_FILE = backupFile
+							
+							echo "Loki backup completed: ${backupFile}"
+						}
+					}
+				}
+
+				stage('Prometheus') {
+					steps {
+						script {
+							def backupFile = getBackupFilename('prometheus')
+							
+							echo "Starting Prometheus backup to ${backupFile}"
+
+							sh """
+								kubectl exec prometheus-server-0 -n maxstash-global -- tar czf /tmp/backup.tar.gz -C /data .
+								kubectl cp maxstash-global/prometheus-server-0:/tmp/backup.tar.gz ${backupFile}
+							"""
+
+							archiveArtifacts artifacts: "${backupFile}", fingerprint: true
+							env.PROMETHEUS_BACKUP_FILE = backupFile
+							
+							echo "Prometheus backup completed: ${backupFile}"
+						}
+					}
+				}
+
+				stage('Grafana') {
+					steps {
+						script {
+							def backupFile = getBackupFilename('grafana')
+							
+							echo "Starting Grafana backup to ${backupFile}"
+
+							sh """
+								kubectl exec grafana-0 -n maxstash-global -- tar czf /tmp/backup.tar.gz -C /var/lib/grafana .
+								kubectl cp maxstash-global/grafana-0:/tmp/backup.tar.gz ${backupFile}
+							"""
+
+							archiveArtifacts artifacts: "${backupFile}", fingerprint: true
+							env.GRAFANA_BACKUP_FILE = backupFile
+							
+							echo "Grafana backup completed: ${backupFile}"
+						}
+					}
+				}
+
+				stage('Minecraft') {
+					steps {
+						script {
+							def backupFile = getBackupFilename('minecraft')
+							
+							echo "Starting Minecraft world backup to ${backupFile}"
+
+							sh """
+								kubectl exec minecraft-0 -n maxstash-apps -- tar czf /tmp/backup.tar.gz -C /data world
+								kubectl cp maxstash-apps/minecraft-0:/tmp/backup.tar.gz ${backupFile}
+							"""
+
+							archiveArtifacts artifacts: "${backupFile}", fingerprint: true
+							env.MINECRAFT_BACKUP_FILE = backupFile
+							
+							echo "Minecraft backup completed: ${backupFile}"
+						}
+					}
+				}
+
+				stage('Redis') {
+					steps {
+						script {
+							def backupFile = getBackupFilename('redis')
+							
+							echo "Starting Redis backup to ${backupFile}"
+
+							sh """
+								kubectl exec redis-master-0 -n maxstash-global -- redis-cli SAVE
+								kubectl exec redis-master-0 -n maxstash-global -- tar czf /tmp/backup.tar.gz -C /data dump.rdb
+								kubectl cp maxstash-global/redis-master-0:/tmp/backup.tar.gz ${backupFile}
+							"""
+
+							archiveArtifacts artifacts: "${backupFile}", fingerprint: true
+							env.REDIS_BACKUP_FILE = backupFile
+							
+							echo "Redis backup completed: ${backupFile}"
+						}
+					}
+				}
+
+				stage('Jenkins') {
+					steps {
+						script {
+							def backupFile = getBackupFilename('jenkins')
+							
+							echo "Starting Jenkins backup to ${backupFile}"
+
+							sh """
+								kubectl exec jenkins-0 -n maxstash-global -- tar czf /tmp/backup.tar.gz \\
+									-C /var/jenkins_home \\
+									--exclude='workspace/*' \\
+									--exclude='caches/*' \\
+									--exclude='logs/*' \\
+									jobs/ config.xml *.xml plugins/ users/ secrets/
+								kubectl cp maxstash-global/jenkins-0:/tmp/backup.tar.gz ${backupFile}
+							"""
+
+							archiveArtifacts artifacts: "${backupFile}", fingerprint: true
+							env.JENKINS_BACKUP_FILE = backupFile
+							
+							echo "Jenkins backup completed: ${backupFile}"
+						}
+					}
+				}
+			}
+		}
+
+		stage('Distribute to Nodes') {
+			steps {
+				script {
+					def services = [
+						[name: 'postgres', namespace: 'maxstash-global', file: env.POSTGRES_BACKUP_FILE],
+						[name: 'loki', namespace: 'maxstash-global', file: env.LOKI_BACKUP_FILE],
+						[name: 'prometheus', namespace: 'maxstash-global', file: env.PROMETHEUS_BACKUP_FILE],
+						[name: 'grafana', namespace: 'maxstash-global', file: env.GRAFANA_BACKUP_FILE],
+						[name: 'minecraft', namespace: 'maxstash-apps', file: env.MINECRAFT_BACKUP_FILE],
+						[name: 'redis', namespace: 'maxstash-global', file: env.REDIS_BACKUP_FILE],
+						[name: 'jenkins', namespace: 'maxstash-global', file: env.JENKINS_BACKUP_FILE]
+					]
+
+					def nodeCount = sh(
+						script: "kubectl get nodes --no-headers | wc -l",
+						returnStdout: true
+					).trim()
+
+					echo "Distributing backups to ${nodeCount} nodes"
+
+					// Apply common resources once
+					sh "kubectl apply -f distribute-to-nodes.yaml"
+
+					services.each { service ->
+						if (service.file) {
+							echo "Distributing ${service.name} backup: ${service.file}"
+
+							sh """
+								kubectl create configmap backup-data \
+									--from-file=${service.file} \
+									-n ${service.namespace} \
+									--dry-run=client -o yaml | kubectl apply -f -
+							"""
+
+							sh """
+								kubectl delete job distribute-backup -n ${service.namespace} --ignore-not-found=true
+								sleep 2
+							"""
+
+							sh """
+								cat distribute-to-nodes.yaml | \\
+								sed 's/SERVICE_NAME/${service.name}/g' | \\
+								sed 's/BACKUP_FILE/${service.file}/g' | \\
+								sed 's/parallelism: 1/parallelism: ${nodeCount}/g' | \\
+								sed 's/completions: 1/completions: ${nodeCount}/g' | \\
+								kubectl apply -f - -n ${service.namespace}
+							"""
+
+							sh """
+								kubectl wait --for=condition=complete job/distribute-backup -n ${service.namespace} --timeout=300s
+							"""
+
+							sh """
+								kubectl delete job distribute-backup -n ${service.namespace}
+								kubectl delete configmap backup-data -n ${service.namespace}
+							"""
+
+							echo "✓ ${service.name} backup distributed"
+						}
+					}
+
+					echo "✓ All backups distributed to nodes"
+				}
+			}
+		}
+	}
+
+	post {
+		success {
+			echo "✓ All backups completed successfully"
+		}
+		failure {
+			echo "✗ One or more backups failed"
+		}
+	}
+}
