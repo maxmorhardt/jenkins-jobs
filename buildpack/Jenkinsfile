@@ -16,7 +16,7 @@ pipeline {
 	}
 
 	environment { 
-		APP_NAME = 'jenkins-buildpack'
+		APP_NAME = 'buildpack'
 		GITHUB_URL = 'https://github.com/maxmorhardt/jenkins-jobs'
 		NAMESPACE = 'maxstash-apps'
 
