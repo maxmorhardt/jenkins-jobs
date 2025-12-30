@@ -79,27 +79,27 @@ pipeline {
 						]]
 					)
 
+					sh 'ls -lah'
 					echo "APP_NAME: $APP_NAME"
 					echo "NAMESPACE: $NAMESPACE"
 					echo "BRANCH: $BRANCH_NAME"
 					echo "HELM_VERSION: $HELM_VERSION"
+					sh 'exit 1'
 				}
 			}
 		}
 
 		stage('Backup Database') {
 			steps {
-				dir('postgres') {
-					script {
-						env.BACKUP_FILE = getBackupFilename()
+				script {
+					env.BACKUP_FILE = getBackupFilename()
 
-						sh """
-							kubectl exec ${POD_NAME} -n ${NAMESPACE} -- bash -c 'PGPASSWORD=${POSTGRES_PSW} pg_dumpall -U ${POSTGRES_USR} > /tmp/backup.sql'
-							kubectl cp ${NAMESPACE}/${POD_NAME}:/tmp/backup.sql ${BACKUP_FILE}
-						"""
+					sh """
+						kubectl exec ${POD_NAME} -n ${NAMESPACE} -c postgresql -- bash -c 'PGPASSWORD=${POSTGRES_PSW} pg_dumpall -U ${POSTGRES_USR} > /tmp/backup.sql'
+						kubectl cp ${NAMESPACE}/${POD_NAME}:/tmp/backup.sql ${BACKUP_FILE} -c postgresql
+					"""
 
-						archiveArtifacts artifacts: "$BACKUP_FILE", fingerprint: true
-					}
+					archiveArtifacts artifacts: "$BACKUP_FILE", fingerprint: true
 				}
 			}
 		}
@@ -162,8 +162,8 @@ pipeline {
 						echo "Restoring database (connections will be rejected during restore)"
 						
 						sh """
-							kubectl cp ${BACKUP_FILE} ${NAMESPACE}/${POD_NAME}:/tmp/restore.sql
-							kubectl exec ${POD_NAME} -n ${NAMESPACE} -- bash -c 'PGPASSWORD=${POSTGRES_PSW} psql -U ${POSTGRES_USR} -d postgres -f /tmp/restore.sql'
+							kubectl cp ${BACKUP_FILE} ${NAMESPACE}/${POD_NAME}:/tmp/restore.sql -c postgresql
+							kubectl exec ${POD_NAME} -n ${NAMESPACE} -c postgresql -- bash -c 'PGPASSWORD=${POSTGRES_PSW} psql -U ${POSTGRES_USR} -d postgres -f /tmp/restore.sql'
 						"""
 						
 						echo "Database restored successfully"
