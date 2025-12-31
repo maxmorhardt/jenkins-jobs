@@ -129,6 +129,7 @@ pipeline {
 						sh """
 							kubectl apply -f storage.yaml
 
+							# Service port is incorrect until validation is complete
 							helm upgrade $APP_NAME $DOCKER_REGISTRY_FULL/bitnamicharts/postgresql \
 								--install \
 								--atomic \
@@ -137,12 +138,8 @@ pipeline {
 								--namespace $NAMESPACE \
 								--version $HELM_VERSION \
 								--values values.yaml \
-								--set primary.service.type=ClusterIP \
-								--set primary.readinessProbe.enabled=false
+								--set primary.service.ports.postgresql=9999
 						"""
-						
-						echo "Waiting for PostgreSQL pod to be ready for restore..."
-						sh "kubectl wait --for=condition=ready pod/${POD_NAME} -n ${NAMESPACE} --timeout=300s"
 					}
 				}
 			}
@@ -179,14 +176,14 @@ pipeline {
 
 					echo "Validating keycloak database"
 					sh """
-						kubectl exec ${POD_NAME} -n ${NAMESPACE} -c postgresql -- bash -c 'PGPASSWORD=${POSTGRES_PSW} psql -U ${POSTGRES_USR} -d keycloak -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '\''public'\'';"'
+						kubectl exec ${POD_NAME} -n ${NAMESPACE} -c postgresql -- bash -c "PGPASSWORD=${POSTGRES_PSW} psql -U ${POSTGRES_USR} -d keycloak -c \"SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';\""
 					"""
-
+					
 					echo "Validating squares database"
 					sh """
-						kubectl exec ${POD_NAME} -n ${NAMESPACE} -c postgresql -- bash -c 'PGPASSWORD=${POSTGRES_PSW} psql -U ${POSTGRES_USR} -d squares -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '\''public'\'';"'
+						kubectl exec ${POD_NAME} -n ${NAMESPACE} -c postgresql -- bash -c "PGPASSWORD=${POSTGRES_PSW} psql -U ${POSTGRES_USR} -d squares -c \"SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';\""
 					"""
-
+					
 					echo "Verification complete"
 				}
 			}
@@ -195,9 +192,7 @@ pipeline {
 		stage('Enable Connections') {
 			steps {
 				dir('k8s/postgres') {
-					script {
-						echo "Enabling readiness probes to allow connections"
-						
+					script {						
 						sh """
 							helm upgrade $APP_NAME $DOCKER_REGISTRY_FULL/bitnamicharts/postgresql \
 								--install \
@@ -208,8 +203,6 @@ pipeline {
 								--version $HELM_VERSION \
 								--values values.yaml
 						"""
-						
-						echo "PostgreSQL is now ready to accept connections"
 					}
 				}
 			}

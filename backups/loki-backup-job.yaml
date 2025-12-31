@@ -1,0 +1,33 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: loki-backup-job
+  namespace: maxstash-global
+spec:
+  template:
+    spec:
+      containers:
+        - name: backup
+          image: ubuntu:24.04
+          command:
+            [
+              'tar',
+              'czf',
+              '/backup/loki-data.tar.gz',
+              '-C',
+              '/loki/chunks',
+              '.'
+            ]
+          volumeMounts:
+            - name: loki-data
+              mountPath: /loki
+            - name: backup-output
+              mountPath: /backup
+      restartPolicy: Never
+      volumes:
+        - name: loki-data
+          persistentVolumeClaim:
+            claimName: storage-loki-0
+        - name: backup-output
+          emptyDir: {}
+  backoffLimit: 3
