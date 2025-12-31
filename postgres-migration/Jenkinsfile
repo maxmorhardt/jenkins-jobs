@@ -170,21 +170,39 @@ pipeline {
 					"""
 
 					echo "Checking database list"
-					sh """
-						kubectl exec ${POD_NAME} -n ${NAMESPACE} -c postgresql -- bash -c 'PGPASSWORD=${POSTGRES_PSW} psql -U ${POSTGRES_USR} -d postgres -c "SELECT datname FROM pg_database WHERE datistemplate = false;"'
-					"""
+					def dbList = sh(
+						script: """kubectl exec ${POD_NAME} -n ${NAMESPACE} -c postgresql -- bash -c 'PGPASSWORD=${POSTGRES_PSW} psql -U ${POSTGRES_USR} -d postgres -t -c "SELECT datname FROM pg_database WHERE datistemplate = false;"'""",
+						returnStdout: true
+					).trim()
+					
+					def dbCount = dbList.split('\n').findAll { it.trim() }.size()					
+					if (dbCount <= 2) {
+						error("Expected more databases, found ${dbCount}")
+					}
 
 					echo "Validating keycloak database"
-					sh """
-						kubectl exec ${POD_NAME} -n ${NAMESPACE} -c postgresql -- bash -c "PGPASSWORD=${POSTGRES_PSW} psql -U ${POSTGRES_USR} -d keycloak -c \"SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';\""
-					"""
+					def keycloakTables = sh(
+						script: """kubectl exec ${POD_NAME} -n ${NAMESPACE} -c postgresql -- bash -c 'PGPASSWORD=${POSTGRES_PSW} psql -U ${POSTGRES_USR} -d keycloak -t -c "\\\\dt"'""",
+						returnStdout: true
+					).trim()
+					
+					def keycloakCount = keycloakTables.split('\n').findAll { it.contains('|') }.size()					
+					if (keycloakCount <= 2) {
+						error("Expected more tables in keycloak, found ${keycloakCount}")
+					}
 					
 					echo "Validating squares database"
-					sh """
-						kubectl exec ${POD_NAME} -n ${NAMESPACE} -c postgresql -- bash -c "PGPASSWORD=${POSTGRES_PSW} psql -U ${POSTGRES_USR} -d squares -c \"SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';\""
-					"""
+					def squaresTables = sh(
+						script: """kubectl exec ${POD_NAME} -n ${NAMESPACE} -c postgresql -- bash -c 'PGPASSWORD=${POSTGRES_PSW} psql -U ${POSTGRES_USR} -d squares -t -c "\\\\dt"'""",
+						returnStdout: true
+					).trim()
 					
-					echo "Verification complete"
+					def squaresCount = squaresTables.split('\n').findAll { it.contains('|') }.size()					
+					if (squaresCount <= 2) {
+						error("Expected more tables in squares, found ${squaresCount}")
+					}
+					
+					echo "✓ All validation tests passed successfully"
 				}
 			}
 		}
