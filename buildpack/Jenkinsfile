@@ -18,7 +18,7 @@ pipeline {
 	environment { 
 		APP_NAME = 'buildpack'
 		GITHUB_URL = 'https://github.com/maxmorhardt/jenkins-jobs'
-		NAMESPACE = 'maxstash-apps'
+		NAMESPACE = 'apps'
 
 		KUBECONFIG = credentials('kube-config')
 	}

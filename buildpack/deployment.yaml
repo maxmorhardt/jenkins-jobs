@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: buildpack
-  namespace: maxstash-apps
+  namespace: apps
   labels:
     app: buildpack
 spec:
